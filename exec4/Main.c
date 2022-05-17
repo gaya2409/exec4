@@ -43,7 +43,7 @@ int main()
 	factorGivenCourse(students, coursesPerStudent, numberOfStudents, "Advanced Topics in C", +5);
 	printStudentArray(students, coursesPerStudent, numberOfStudents);
 	//studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
-	
+
 	//Part B
 	Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
 	writeToBinFile("students.bin", transformedStudents, numberOfStudents);
@@ -60,17 +60,120 @@ int main()
 
 void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
-	//add code here
+	FILE* pFile;
+	char buffer[1023];
+	pFile = fopen(fileName, "t");
+	if (pFile == NULL) { //file does not exists
+		printf("Error opening file");
+		exit(1);
+	}
+	else {
+		while (!feof(pFile))
+			if (fgets(buffer, 1023, pFile) != NULL) {
+				*(numberOfStudents)++;
+			}
+		coursesPerStudent = (int*)malloc(sizeof(int) * (*numberOfStudents));
+		if (coursesPerStudent == NULL) {
+			printf("memory allocatioln failled");
+			exit(0);
+
+		}
+		int i = 0;
+		rewind(pFile);
+		while (!feof(pFile))
+			if (fgets(buffer, 1023, pFile) != NULL) {
+				coursesPerStudent[i] = countPipes(buffer, 1023);
+				i++;
+			}
+		fclose(pFile);
+	}
 }
 
 int countPipes(const char* lineBuffer, int maxCount)
 {
-	//add code here
+
+	int theLower;
+	int counter = 0;
+	if (lineBuffer == NULL) return -1;
+	if (maxCount <= 0) return 0;
+
+	if (strlen(lineBuffer) >= maxCount) {
+		theLower = maxCount;
+	}
+	else theLower = strlen(lineBuffer);
+
+	for (int i = 0; i < theLower; i++) {
+
+		if (lineBuffer[i] == '|') {
+			counter++;
+		}
+	}
+	return counter;
 }
 
 char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
-	//add code here
+	countStudentsAndCourses(fileName, coursesPerStudent, numberOfStudents);
+	char*** students = (char***)malloc(sizeof(char) * (*numberOfStudents));
+	if (students == NULL) return 0;
+
+	for (int i = 0; i < (*numberOfStudents); i++) {
+
+		char** student = (char**)malloc(sizeof(char) * (*coursesPerStudent[i]) * 2 + 1);
+		if (student == NULL) return 0;
+		**(students + i) = student;
+	}
+
+	FILE* pFile;
+	char buffer[1023];
+	pFile = fopen(fileName, "t");
+	if (pFile == NULL) { //file does not exists
+		printf("Error opening file");
+		exit(0);
+	}
+
+	int studentIndex = 0;
+	while (!feof(pFile)) {
+		if (fgets(buffer, 1023, pFile) != NULL) {
+			char** student = **(students + studentIndex);
+			studentIndex++;
+
+			//get student name
+			int len = strlen(buffer);
+			char* name = NULL;
+			int itemIndex = 0;
+			int lastIndex = 0;
+			for (int i = 0; i < len; i++) {
+				if (buffer[i] == '|' || i == len-1) {
+					if (name == NULL) {
+						name = (char*)malloc(sizeof(char) * i);
+						if (name == NULL) exit(0);
+						strncpy(name, buffer, i);
+						student = name;
+						lastIndex = i;
+						continue;
+					}
+					//for each course get the grade
+					itemIndex++;
+					char* grade = (char*)malloc(sizeof(char) * (i - lastIndex));
+					if (grade == NULL) exit(0);
+					strncpy(grade, buffer, i - lastIndex);
+					*(student + itemIndex)=grade;
+					lastIndex = i;
+				}
+				else if (buffer[i] == ',') {
+					//for each course get the name
+					itemIndex++;
+					char* courseName = (char*)malloc(sizeof(char) * (i - lastIndex));
+					if (courseName == NULL) exit(0);
+					strncpy(courseName, buffer, i - lastIndex);
+					*(student + itemIndex) = courseName;
+					lastIndex = i;
+				}
+			}
+		}
+	}
+	return students;
 }
 
 void factorGivenCourse(char** const* students, const int* coursesPerStudent, int numberOfStudents, const char* courseName, int factor)
