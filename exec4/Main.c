@@ -42,12 +42,12 @@ int main()
 	char*** students = makeStudentArrayFromFile("studentList.txt", &coursesPerStudent, &numberOfStudents);
 	factorGivenCourse(students, coursesPerStudent, numberOfStudents, "Advanced Topics in C", +5);
 	printStudentArray(students, coursesPerStudent, numberOfStudents);
-	//studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
+	studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
 
 	//Part B
-	Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
+	/*Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
 	writeToBinFile("students.bin", transformedStudents, numberOfStudents);
-	Student* testReadStudents = readFromBinFile("students.bin");
+	Student* testReadStudents = readFromBinFile("students.bin");*/
 
 	//add code to free all arrays of struct Student
 
@@ -62,7 +62,7 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 {
 	FILE* pFile;
 	char buffer[1023];
-	pFile = fopen(fileName, "t");
+	pFile = fopen(fileName, "rt");
 	if (pFile == NULL) { //file does not exists
 		printf("Error opening file");
 		exit(1);
@@ -70,9 +70,9 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 	else {
 		while (!feof(pFile))
 			if (fgets(buffer, 1023, pFile) != NULL) {
-				*(numberOfStudents)++;
+				*numberOfStudents += 1;
 			}
-		coursesPerStudent = (int*)malloc(sizeof(int) * (*numberOfStudents));
+		coursesPerStudent = calloc(*numberOfStudents, sizeof(int));
 		if (coursesPerStudent == NULL) {
 			printf("memory allocatioln failled");
 			exit(0);
@@ -82,7 +82,7 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 		rewind(pFile);
 		while (!feof(pFile))
 			if (fgets(buffer, 1023, pFile) != NULL) {
-				coursesPerStudent[i] = countPipes(buffer, 1023);
+				(*coursesPerStudent)[i] = countPipes(buffer, 1023);
 				i++;
 			}
 		fclose(pFile);
@@ -91,7 +91,6 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 
 int countPipes(const char* lineBuffer, int maxCount)
 {
-
 	int theLower;
 	int counter = 0;
 	if (lineBuffer == NULL) return -1;
@@ -114,19 +113,20 @@ int countPipes(const char* lineBuffer, int maxCount)
 char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
 	countStudentsAndCourses(fileName, coursesPerStudent, numberOfStudents);
-	char*** students = (char***)malloc(sizeof(char) * (*numberOfStudents));
+	char*** students = calloc(numberOfStudents, sizeof(char**));
 	if (students == NULL) return 0;
 
-	for (int i = 0; i < (*numberOfStudents); i++) {
+	for (int i = 0; i < *numberOfStudents; i++) {
 
-		char** student = (char**)malloc(sizeof(char) * (*coursesPerStudent[i]) * 2 + 1);
+		int x = (*coursesPerStudent)[i] * 2 + 1;
+		char** student = calloc(x, sizeof(char*));
 		if (student == NULL) return 0;
 		**(students + i) = student;
 	}
 
 	FILE* pFile;
 	char buffer[1023];
-	pFile = fopen(fileName, "t");
+	pFile = fopen(fileName, "rt");
 	if (pFile == NULL) { //file does not exists
 		printf("Error opening file");
 		exit(0);
@@ -135,7 +135,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 	int studentIndex = 0;
 	while (!feof(pFile)) {
 		if (fgets(buffer, 1023, pFile) != NULL) {
-			char** student = **(students + studentIndex);
+			char** student = *(students + studentIndex);
 			studentIndex++;
 
 			//get student name
@@ -184,7 +184,7 @@ void factorGivenCourse(char** const* students, const int* coursesPerStudent, int
 			if (strcmp(courseName, students[i][j])) {
 				int grade = atoi(students[i][j + 1]) + factor;
 				grade = grade < 0 ? 0 : (grade > 100 ? 100 : grade);
-				itoa(grade, students[i][j + 1], 10);
+				_itoa(grade, students[i][j + 1], 10);
 				break;
 			}
 		}
