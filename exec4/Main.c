@@ -180,7 +180,7 @@ void factorGivenCourse(char** const* students, const int* coursesPerStudent, int
 {
 	if (factor < -20 || factor > 20) return;
 	for (int i = 0; i < numberOfStudents; i++) {
-		for (int j = 1; j < coursesPerStudent[i]; j += 2) {
+		for (int j = 1; j < coursesPerStudent[i] * 2; j += 2) {
 			if (strcmp(courseName, students[i][j])) {
 				int grade = atoi(students[i][j + 1]) + factor;
 				grade = grade < 0 ? 0 : (grade > 100 ? 100 : grade);
