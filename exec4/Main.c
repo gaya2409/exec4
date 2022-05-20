@@ -144,7 +144,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 			int itemIndex = 0;
 			int lastIndex = 0;
 			for (int i = 0; i < len; i++) {
-				if (buffer[i] == '|' || i == len-1) {
+				if (buffer[i] == '|' || i == len - 1) {
 					if (name == NULL) {
 						name = (char*)malloc(sizeof(char) * i);
 						if (name == NULL) exit(0);
@@ -158,7 +158,7 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 					char* grade = (char*)malloc(sizeof(char) * (i - lastIndex));
 					if (grade == NULL) exit(0);
 					strncpy(grade, buffer, i - lastIndex);
-					*(student + itemIndex)=grade;
+					*(student + itemIndex) = grade;
 					lastIndex = i;
 				}
 				else if (buffer[i] == ',') {
@@ -178,7 +178,17 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 
 void factorGivenCourse(char** const* students, const int* coursesPerStudent, int numberOfStudents, const char* courseName, int factor)
 {
-	//add code here
+	if (factor < -20 || factor > 20) return;
+	for (int i = 0; i < numberOfStudents; i++) {
+		for (int j = 1; j < coursesPerStudent[i]; j += 2) {
+			if (strcmp(courseName, students[i][j])) {
+				int grade = atoi(students[i][j + 1]) + factor;
+				grade = grade < 0 ? 0 : (grade > 100 ? 100 : grade);
+				itoa(grade, students[i][j + 1], 10);
+				break;
+			}
+		}
+	}
 }
 
 void printStudentArray(const char* const* const* students, const int* coursesPerStudent, int numberOfStudents)
@@ -197,7 +207,36 @@ void printStudentArray(const char* const* const* students, const int* coursesPer
 
 void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStudents)
 {
-	//add code here
+
+	FILE* pFile;
+	char buffer[1023];
+	pFile = fopen("studentList1.txt", "w");
+	if (pFile == NULL) { //file does not exists
+		printf("Error opening file");
+		exit(1);
+	}
+	for (int x = 0; x < numberOfStudents; x++) {
+		for (int y = 0; y < coursesPerStudent[x]; y++) {
+			fputs(students[x][y],pFile);
+			if (y == 0 || (y > 2 && y%2==1)) {
+				fputc('|', pFile);
+			}
+			else {
+				fputc(',', pFile);
+			}
+       }
+	}
+
+	fclose(pFile);
+
+	for (int i = 0; i < numberOfStudents; i++) {
+		for (int j = 0; j < coursesPerStudent[i]; j++) {
+			free(students[i][j]);
+		}
+		free(students[i]);
+	}
+	free(students);
+	free(coursesPerStudent);
 }
 
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents)
