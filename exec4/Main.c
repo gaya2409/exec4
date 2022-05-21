@@ -180,7 +180,8 @@ void factorGivenCourse(char** const* students, const int* coursesPerStudent, int
 {
 	if (factor < -20 || factor > 20) return;
 	for (int i = 0; i < numberOfStudents; i++) {
-		for (int j = 1; j < coursesPerStudent[i] * 2; j += 2) {
+		int cellCount = coursesPerStudent[i] * 2 + 1;
+		for (int j = 1; j < cellCount; j += 2) {
 			if (strcmp(courseName, students[i][j])) {
 				int grade = atoi(students[i][j + 1]) + factor;
 				grade = grade < 0 ? 0 : (grade > 100 ? 100 : grade);
@@ -230,8 +231,10 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 	fclose(pFile);
 
 	for (int i = 0; i < numberOfStudents; i++) {
-		for (int j = 0; j < coursesPerStudent[i]; j++) {
+		int cellCount = coursesPerStudent[i] * 2 + 1;
+		for (int j = 0; j < cellCount; j+=2) {
 			free(students[i][j]);
+			free(students[i][j+1]);
 		}
 		free(students[i]);
 	}
