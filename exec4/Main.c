@@ -232,7 +232,8 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 
 	for (int i = 0; i < numberOfStudents; i++) {
 		int cellCount = coursesPerStudent[i] * 2 + 1;
-		for (int j = 0; j < cellCount; j+=2) {
+		free(students[i][0]);
+		for (int j = 1; j < cellCount; j+=2) {
 			free(students[i][j]);
 			free(students[i][j+1]);
 		}
@@ -254,5 +255,24 @@ Student* readFromBinFile(const char* fileName)
 
 Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents)
 {
-	//add code here
+	Student* studentsList = (Student*)malloc(sizeof(Student)*numberOfStudents);
+	if (studentsList == NULL) {
+		printf("Error allocating studentList");
+		exit(0);
+	}
+
+	for (int i = 0; i < numberOfStudents; i++) {
+		//intialize and copy each student
+		strcpy(studentsList[i].name, students[i][0]);
+		studentsList[i].numberOfCourses = coursesPerStudent[i];
+		studentsList[i].grades = (StudentCourseGrade*)malloc(sizeof(StudentCourseGrade) * coursesPerStudent[i]);
+		int cellCount = coursesPerStudent[i] * 2 + 1;
+		for (int j = 0; j < cellCount; j += 2) {
+			//initialize and copy courses and grades
+			strcpy(studentsList[i].grades[j].courseName, students[i][j]);
+			studentsList[i].grades[j].grade = atoi(students[i][j + 1]);
+		}
+	}
+
+	return studentsList;
 }
