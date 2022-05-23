@@ -208,7 +208,6 @@ void printStudentArray(const char* const* const* students, const int* coursesPer
 
 void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStudents)
 {
-
 	FILE* pFile;
 	char buffer[1023];
 	pFile = fopen("studentList1.txt", "w");
@@ -245,12 +244,45 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 
 void writeToBinFile(const char* fileName, Student* students, int numberOfStudents)
 {
-	//add code here
+	FILE* pbfile;
+	pbfile = fopen(fileName, "wb");
+	if (!pbfile) printf("Unable to open file!");
+	else
+	{
+		fwrite(&numberOfStudents, sizeof(int), 1, pbfile); //number of students
+		for (int i = 0; i < numberOfStudents; i++) {
+			fwrite(&(students[i].name), 35, 1, pbfile);//name
+			fwrite(&(students[i].numberOfCourses), sizeof(int), 1, pbfile);//number of courses for student
+			fwrite(&(students[i].grades), sizeof(StudentCourseGrade), students[i].numberOfCourses, pbfile); //courses+grades
+		}
+
+		fclose(pbfile);
+	}
 }
 
 Student* readFromBinFile(const char* fileName)
 {
-	//add code here
+	Student* studentsList = NULL;
+
+	FILE* pbfile;
+	pbfile = fopen(fileName, "rb");
+	if (!pbfile) printf("Unable to open file!");
+	else
+	{
+		int numberOfStudents = 0;
+		if (fread(&numberOfStudents, sizeof(int), 1, pbfile) != NULL) {
+			studentsList = (Student*)malloc(sizeof(Student) * numberOfStudents);
+			for (int i = 0; i < numberOfStudents; i++) {
+				fread(&(studentsList[i].name), 35, 1, pbfile);
+				fread(&(studentsList[i].numberOfCourses), sizeof(int), 1, pbfile);
+				fread(&(studentsList[i].grades), sizeof(StudentCourseGrade), studentsList[i].numberOfCourses, pbfile);
+			}
+		}
+
+		fclose(pbfile);
+	}
+
+	return studentsList;
 }
 
 Student* transformStudentArray(char*** students, const int* coursesPerStudent, int numberOfStudents)
