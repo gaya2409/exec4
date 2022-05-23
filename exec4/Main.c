@@ -40,6 +40,7 @@ int main()
 	int* coursesPerStudent = NULL;
 	int numberOfStudents = 0;
 	char*** students = makeStudentArrayFromFile("studentList.txt", &coursesPerStudent, &numberOfStudents);
+	printStudentArray(students, coursesPerStudent, numberOfStudents);
 	factorGivenCourse(students, coursesPerStudent, numberOfStudents, "Advanced Topics in C", +5);
 	printStudentArray(students, coursesPerStudent, numberOfStudents);
 	studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
@@ -72,17 +73,17 @@ void countStudentsAndCourses(const char* fileName, int** coursesPerStudent, int*
 			if (fgets(buffer, 1023, pFile) != NULL) {
 				*numberOfStudents += 1;
 			}
-		coursesPerStudent = calloc(*numberOfStudents, sizeof(int));
+		coursesPerStudent = (int*)malloc(*numberOfStudents * sizeof(int));
 		if (coursesPerStudent == NULL) {
-			printf("memory allocatioln failled");
-			exit(0);
-
+			printf("memory allocation failled");
+			exit(1);
 		}
 		int i = 0;
 		rewind(pFile);
 		while (!feof(pFile))
 			if (fgets(buffer, 1023, pFile) != NULL) {
-				(*coursesPerStudent)[i] = countPipes(buffer, 1023);
+				int* courses = countPipes(buffer, 1023);
+				*(coursesPerStudent + i) = courses;
 				i++;
 			}
 		fclose(pFile);
@@ -113,14 +114,20 @@ int countPipes(const char* lineBuffer, int maxCount)
 char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, int* numberOfStudents)
 {
 	countStudentsAndCourses(fileName, coursesPerStudent, numberOfStudents);
-	char*** students = calloc(numberOfStudents, sizeof(char**));
-	if (students == NULL) return 0;
+	char*** students = (char**)malloc(*numberOfStudents * sizeof(char**));
+	if (students == NULL) {
+		printf("memory allocation failled");
+		exit(0);
+	}
 
 	for (int i = 0; i < *numberOfStudents; i++) {
 
-		int x = (*coursesPerStudent)[i] * 2 + 1;
-		char** student = calloc(x, sizeof(char*));
-		if (student == NULL) return 0;
+		int numCourses = *(coursesPerStudent[i]) * 2 + 1;
+		char** student = (char*)malloc(numCourses * sizeof(char*));
+		if (student == NULL) {
+			printf("memory allocation failled");
+			exit(0);
+		}
 		**(students + i) = student;
 	}
 
@@ -147,7 +154,10 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 				if (buffer[i] == '|' || i == len - 1) {
 					if (name == NULL) {
 						name = (char*)malloc(sizeof(char) * i);
-						if (name == NULL) exit(0);
+						if (name == NULL) {
+							printf("memory allocation failled");
+							exit(0);
+						}
 						strncpy(name, buffer, i);
 						student = name;
 						lastIndex = i;
@@ -156,7 +166,10 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 					//for each course get the grade
 					itemIndex++;
 					char* grade = (char*)malloc(sizeof(char) * (i - lastIndex));
-					if (grade == NULL) exit(0);
+					if (grade == NULL) {
+						printf("memory allocation failled");
+						exit(0);
+					}
 					strncpy(grade, buffer, i - lastIndex);
 					*(student + itemIndex) = grade;
 					lastIndex = i;
@@ -165,7 +178,10 @@ char*** makeStudentArrayFromFile(const char* fileName, int** coursesPerStudent, 
 					//for each course get the name
 					itemIndex++;
 					char* courseName = (char*)malloc(sizeof(char) * (i - lastIndex));
-					if (courseName == NULL) exit(0);
+					if (courseName == NULL) {
+						printf("memory allocation failled");
+						exit(0);
+					}
 					strncpy(courseName, buffer, i - lastIndex);
 					*(student + itemIndex) = courseName;
 					lastIndex = i;
