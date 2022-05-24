@@ -40,15 +40,14 @@ int main()
 	int* coursesPerStudent = NULL;
 	int numberOfStudents = 0;
 	char*** students = makeStudentArrayFromFile("studentList.txt", &coursesPerStudent, &numberOfStudents);
+	factorGivenCourse(students, coursesPerStudent, numberOfStudents, "Advanced Topics in C", +5);
 	printStudentArray(students, coursesPerStudent, numberOfStudents);
-	factorGivenCourse(students, coursesPerStudent, numberOfStudents, /*"Advanced Topics in C"*/ "Complexity Theory", +5);
-	printStudentArray(students, coursesPerStudent, numberOfStudents);
-	studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
+	//studentsToFile(students, coursesPerStudent, numberOfStudents); //this frees all memory. Part B fails if this line runs. uncomment for testing (and comment out Part B)
 
 	//Part B
-	/*Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
+	Student* transformedStudents = transformStudentArray(students, coursesPerStudent, numberOfStudents);
 	writeToBinFile("students.bin", transformedStudents, numberOfStudents);
-	Student* testReadStudents = readFromBinFile("students.bin");*/
+	Student* testReadStudents = readFromBinFile("students.bin");
 
 	//add code to free all arrays of struct Student
 
@@ -167,7 +166,7 @@ void factorGivenCourse(char** const* students, const int* coursesPerStudent, int
 	for (int i = 0; i < numberOfStudents; i++) {
 		int cellCount = coursesPerStudent[i] * 2 + 1;
 		for (int j = 1; j < cellCount; j += 2) {
-			if (strcmp(courseName, students[i][j])) {
+			if (!strcmp(courseName, students[i][j])) {
 				int grade = atoi(students[i][j + 1]) + factor;
 				grade = grade < 0 ? 0 : (grade > 100 ? 100 : grade);
 				_itoa(grade, students[i][j + 1], 10);
@@ -195,22 +194,24 @@ void studentsToFile(char*** students, int* coursesPerStudent, int numberOfStuden
 {
 	FILE* pFile;
 	char buffer[1023];
-	pFile = fopen("studentList1.txt", "w");
+	pFile = fopen("studentList1.txt", "wt");
 	if (pFile == NULL) { //file does not exists
 		printf("Error opening file");
 		exit(1);
 	}
 	for (int x = 0; x < numberOfStudents; x++) {
-		for (int y = 0; y < coursesPerStudent[x]; y++) {
+		int cellCount = coursesPerStudent[x] * 2 + 1;
+		for (int y = 0; y < cellCount; y++) {
 			fputs(students[x][y], pFile);
-			if (y == 0 || (y > 2 && y % 2 == 1)) {
-				fputc('|', pFile);
-			}
-			else {
-				fputc(',', pFile);
+			if (y != cellCount - 1) {
+				if (y % 2 == 0) {
+					fputc('|', pFile);
+				}
+				else {
+					fputc(',', pFile);
+				}
 			}
 		}
-		fputc('\n', pFile);
 	}
 
 	fclose(pFile);
@@ -281,14 +282,19 @@ Student* transformStudentArray(char*** students, const int* coursesPerStudent, i
 
 	for (int i = 0; i < numberOfStudents; i++) {
 		//intialize and copy each student
-		strcpy(studentsList[i].name, students[i][0]);
-		studentsList[i].numberOfCourses = coursesPerStudent[i];
-		studentsList[i].grades = (StudentCourseGrade*)malloc(sizeof(StudentCourseGrade) * coursesPerStudent[i]);
+		strcpy((studentsList + i)->name, students[i][0]);
+		(studentsList + i)->numberOfCourses = coursesPerStudent[i];
+		(studentsList + i)->grades = (StudentCourseGrade*)malloc(sizeof(StudentCourseGrade) * coursesPerStudent[i]);
+		if ((studentsList + i)->grades == NULL) {
+			printf("Error allocating grades");
+			exit(1);
+		}
 		int cellCount = coursesPerStudent[i] * 2 + 1;
-		for (int j = 0; j < cellCount; j += 2) {
+		for (int j = 1, k = 0; j < cellCount; j += 2) {
 			//initialize and copy courses and grades
-			strcpy(studentsList[i].grades[j].courseName, students[i][j]);
-			studentsList[i].grades[j].grade = atoi(students[i][j + 1]);
+			strcpy(((studentsList + i)->grades + k)->courseName, students[i][j]);
+			((studentsList + i)->grades + k)->grade = atoi(students[i][j+1]);
+			k++;
 		}
 	}
 
